@@ -1,6 +1,6 @@
 const POSShoppingCart = require('../model/posShoppingCart');
 const Financial = require('../model/financialModel');
-const inmateModel = require('../model/inmateModel');
+const inmateModel = require('../model/studentModel');
 
 const getTransactionsByRange1 = async (req, res) => {
   try {

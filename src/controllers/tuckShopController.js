@@ -181,7 +181,6 @@ const deleteTuckShopItem = async (req, res) => {
   }
 };
 
-
 const searchTuckItems = async (req, res) => {
   try {
     const { query } = req.query;

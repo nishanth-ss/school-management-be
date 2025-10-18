@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const logAudit = require("../utils/auditlogger");
 const userModel = require("../model/userModel");
 const faceapi = require('face-api.js');
-const inmateModel = require("../model/inmateModel");
+const inmateModel = require("../model/studentModel");
 const { faceRecognitionService, faceRecognitionExcludeUserService } = require("../service/faceRecognitionService");
 const { findByIdAndUpdate } = require("../model/departmentModel");
 

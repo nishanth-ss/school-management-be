@@ -12,9 +12,9 @@ scheduleBackup();           // initial schedule
 rescheduleBackupOnUpdate();
 
 app.use(express.json());
-
+app.use('/uploads', express.static(path.join(__dirname,'..', 'uploads')));
 const authRoutes = require("./routes/authRoutes");
-const inmateRoutes = require("./routes/inmateRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 const financialRoutes = require("./routes/financialRoutes");
 const tuckShopRoutes = require("./routes/tuckShopRoutes");
 const cartRoutes = require("./routes/cartRoutes");
@@ -26,9 +26,11 @@ const auditLogsRoutes = require("./routes/auditRoutes");
 const authenticateToken = require("./middleware/authToken");
 const bulkOperations = require("./routes/bulkOprationRoutes");
 const departmentRoles = require("./routes/departmentRoutes");
-const inmateLocationRoutes = require('./routes/inmateLocationRoutes')
+const studentLocationRoutes = require('./routes/studentLocationRoutes')
 const inventoryRoutes = require('./routes/inventoryRoutes')
 const backupRoutes = require('./routes/backupRoutes')
+const fileUploadRoutes = require('./routes/fileUploadRoutes')
+// const studentRoutes = require('./routes/studentRoutesdelete')
 const morgan = require("morgan");
 
 // const allowedOrigins = ["http://localhost:5173"]
@@ -46,7 +48,7 @@ const morgan = require("morgan");
 app.use(cors());
 app.use(morgan(":method :url :status :response-time ms"));
 app.use("/user", authRoutes);
-app.use("/inmate", authenticateToken, inmateRoutes);
+app.use("/student", authenticateToken, studentRoutes);
 app.use("/financial", authenticateToken, financialRoutes);
 app.use("/tuck-shop", authenticateToken, tuckShopRoutes);
 app.use("/pos-shop-cart", authenticateToken, cartRoutes);
@@ -58,10 +60,12 @@ app.use("/reports", authenticateToken, reportRoutes);
 app.use("/logs", authenticateToken, auditLogsRoutes);
 app.use("/bulk-oprations", authenticateToken, bulkOperations);
 app.use("/department", authenticateToken, departmentRoles);
-app.use("/location", authenticateToken, inmateLocationRoutes)
+app.use("/location", authenticateToken, studentLocationRoutes)
 // inventory and canteen operation
 app.use('/inventory',authenticateToken,inventoryRoutes)
 app.use("/backup",authenticateToken,backupRoutes)
+app.use("/upload",authenticateToken,fileUploadRoutes)
+// app.use("/student",authenticateToken,studentRoutes)
 
 
 app.listen(process.env.PORT, () => {

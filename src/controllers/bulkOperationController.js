@@ -1,15 +1,15 @@
 const XLSX = require('xlsx');
 const { parse } = require('csv-parse/sync');
-const Inmate = require('../model/inmateModel');
+const Inmate = require('../model/studentModel');
 const Financial = require('../model/financialModel');
 const logAudit = require('../utils/auditlogger');
 const Department = require("../model/departmentModel");
 const mongoose = require("mongoose");
 const { checkTransactionLimit } = require('../utils/inmateTransactionLimiter');
-const InmateSchema = require("../model/inmateModel");
+const InmateSchema = require("../model/studentModel");
 const userModel = require('../model/userModel');
 const bcrypt = require('bcrypt');
-const InmateLocation = require('../model/inmateLocationModel');
+const InmateLocation = require('../model/studentLocationModel');
 // const { parse } =require('date-fns');
 
 const bulkUpsertInmates = async (req, res) => {

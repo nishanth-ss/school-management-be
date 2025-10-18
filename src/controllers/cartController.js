@@ -1,12 +1,12 @@
 const POSShoppingCart = require("../model/posShoppingCart");
 const TuckShop = require("../model/tuckShopModel");
-const Inmate = require("../model/inmateModel");
+const Inmate = require("../model/studentModel");
 const mongoose = require("mongoose");
 const logAudit = require("../utils/auditlogger");
 const { checkTransactionLimit, checkProductsLimit } = require("../utils/inmateTransactionLimiter");
 const userModel = require("../model/userModel");
-const InmateLocation = require("../model/inmateLocationModel");
-const inmateModel = require("../model/inmateModel");
+const InmateLocation = require("../model/studentLocationModel");
+const inmateModel = require("../model/studentModel");
 
 const createPOSCart = async (req, res) => {
   try {

@@ -1,8 +1,8 @@
-const Inmate = require('../model/inmateModel');
+const Inmate = require('../model/studentModel');
 const POSShoppingCart = require('../model/posShoppingCart');
 const Financial = require('../model/financialModel');
 const TuckShop = require('../model/tuckShopModel');
-const inmateModel = require('../model/inmateModel');
+const inmateModel = require('../model/studentModel');
 
 const getDashboardData = async (req, res) => {
     try {

@@ -1,6 +1,6 @@
 const financialModel = require("../model/financialModel");
-const InmateLocation = require("../model/inmateLocationModel");
-const inmateModel = require("../model/inmateModel");
+const InmateLocation = require("../model/studentLocationModel");
+const inmateModel = require("../model/studentModel");
 const posShoppingCart = require("../model/posShoppingCart");
 const tuckShopModel = require("../model/tuckShopModel");
 

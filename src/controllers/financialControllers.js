@@ -1,10 +1,10 @@
 const FinancialSchema = require("../model/financialModel");
-const InmateSchema = require("../model/inmateModel");
+const InmateSchema = require("../model/studentModel");
 const mongoose = require("mongoose");
 const logAudit = require("../utils/auditlogger");
 const { Parser } = require('json2csv');
 const { checkTransactionLimit } = require("../utils/inmateTransactionLimiter");
-const inmateModel = require("../model/inmateModel");
+const inmateModel = require("../model/studentModel");
 const departmentModel = require("../model/departmentModel");
 
 const downloadWagesCSV = async (req, res) => {

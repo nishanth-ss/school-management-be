@@ -8,7 +8,6 @@ const tokenBlacklist = require("../utils/blackList");
 exports.login = async (req, res) => {
     try {
         const { username, password,descriptor } = req.body;
-
         if(descriptor){
           const allUsers = await UserSchema.find({}, { descriptor: 1, username: 1, role: 1, fullname: 1 });
           function euclideanDistance(desc1, desc2) {
