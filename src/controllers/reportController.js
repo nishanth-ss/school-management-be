@@ -991,28 +991,21 @@ exports.studentReport = async (req, res) => {
 
     const order = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
 
-    // --- Build search/filter object ---
+    // --- Build filter ---
     const filter = {};
     if (student_name) filter.student_name = { $regex: student_name, $options: 'i' };
     if (registration_number) filter.registration_number = { $regex: registration_number, $options: 'i' };
     if (gender) filter.gender = gender;
     if (location_id) filter.location_id = location_id;
 
-    // --- Handle class_name filter via classModel ---
+    // --- Filter by class_name ---
     if (class_name) {
-      const classDocs = await classModel.find({
-        class_name: { $regex: class_name, $options: 'i' }
-      }).select('_id');
-
+      const classDocs = await classModel.find({ class_name: { $regex: class_name, $options: 'i' } }).select('_id');
       if (classDocs.length) {
         const classIds = classDocs.map(c => c._id);
         filter.class_info = { $in: classIds };
       } else {
-        return res.status(200).json({
-          success: true,
-          message: 'No students found',
-          data: []
-        });
+        return res.status(200).json({ success: true, message: 'No students found', data: [] });
       }
     }
 
@@ -1034,40 +1027,58 @@ exports.studentReport = async (req, res) => {
     }
 
     // --- Fetch students ---
-    const students = await studentQuery.exec();
+    const students = await studentQuery.lean();
     if (!students.length) {
       return res.status(200).json({ success: true, message: 'No students found', data: [] });
     }
 
     // --- Format date fields ---
-    const formattedStudents = students.map(s => ({
-      ...s.toObject(),
-      createdAt: moment(s.createdAt).format('DD-MM-YYYY hh:mm:ss A'),
-      updatedAt: moment(s.updatedAt).format('DD-MM-YYYY hh:mm:ss A')
-    }));
-
-    // --- Total count ---
-    const totalCount = await studentModel.countDocuments(filter);
+    students.forEach(s => {
+      s.createdAt = moment(s.createdAt).format('DD-MM-YYYY hh:mm:ss A');
+      s.updatedAt = moment(s.updatedAt).format('DD-MM-YYYY hh:mm:ss A');
+      if (s.date_of_birth) s.date_of_birth = moment(s.date_of_birth).format('DD-MM-YYYY');
+    });
 
     // --- CSV export ---
     if (format === 'csv') {
+      const csvData = students.map(s => ({
+        registration_number: s.registration_number || '',
+        student_name: s.student_name || '',
+        gender: s.gender || '',
+        location: s.location_id?.locationName || '',
+        class_name: s.class_info?.class_name || '',
+        section: s.class_info?.section || '',
+        academic_year: s.class_info?.academic_year || '',
+        date_of_birth: s.date_of_birth || '',
+        blood_group: s.blood_group || '',
+        religion: s.religion || '',
+        mother_tongue: s.mother_tongue || '',
+        contact_number: s.contact_number || '',
+        profile_picture: s.pro_pic?.file_url || '',
+        createdAt: s.createdAt || '',
+        updatedAt: s.updatedAt || ''
+      }));
+
       const fields = [
-        'student_name',
         'registration_number',
+        'student_name',
         'gender',
-        'location_id',
-        'class_info',
-        'pro_pic',
+        'location',
+        'class_name',
+        'section',
+        'academic_year',
         'date_of_birth',
         'blood_group',
         'religion',
         'mother_tongue',
         'contact_number',
+        'profile_picture',
         'createdAt',
         'updatedAt'
       ];
+
       const parser = new Parser({ fields });
-      const csv = parser.parse(formattedStudents);
+      const csv = parser.parse(csvData);
 
       res.setHeader('Content-Disposition', 'attachment; filename=student_report.csv');
       res.setHeader('Content-Type', 'text/csv');
@@ -1075,28 +1086,15 @@ exports.studentReport = async (req, res) => {
     }
 
     // --- JSON response ---
+    const totalCount = await studentModel.countDocuments(filter);
     if (paginated) {
-      return res.status(200).json({
-        success: true,
-        page: pageNum,
-        limit: limitNum,
-        totalCount,
-        data: formattedStudents
-      });
+      return res.status(200).json({ success: true, page: pageNum, limit: limitNum, totalCount, data: students });
     }
 
-    return res.status(200).json({
-      success: true,
-      totalCount,
-      data: formattedStudents
-    });
+    return res.status(200).json({ success: true, totalCount, data: students });
 
   } catch (error) {
     console.error('studentReport error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
+    return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
   }
 };
