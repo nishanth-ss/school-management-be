@@ -373,7 +373,6 @@ const updateStudent = async (req, res) => {
       }
     }
 
-
     if (descriptor) {
       const descriptorExist = await userModel.findOne({
         descriptor,
@@ -384,6 +383,7 @@ const updateStudent = async (req, res) => {
       }
     }
 
+    // 4️⃣ Handle class_info if passed
     let classId = student.class_info;
     if (class_info) {
       let classData = await classModel.findOne({
@@ -399,6 +399,7 @@ const updateStudent = async (req, res) => {
       classId = classData._id;
     }
 
+    // 5️⃣ Validate location if passed
     if (location_id) {
       const locationExists = await studentLocation.findById(location_id);
       if (!locationExists) {
@@ -406,6 +407,7 @@ const updateStudent = async (req, res) => {
       }
     }
 
+    // 6️⃣ Handle profile pic if passed
     let profilePicId = student.pro_pic;
     if (pro_pic) {
       const fileExist = await fileUploadModel.findById(pro_pic);
@@ -413,9 +415,10 @@ const updateStudent = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid pro_pic file ID" });
       }
       profilePicId = pro_pic;
-      uploadedProfilePic = fileExist; 
+      uploadedProfilePic = fileExist;
     }
 
+    // 7️⃣ Build dynamic update object for student
     const studentUpdateData = {
       ...(registration_number && { registration_number }),
       ...(student_name && { student_name }),
@@ -428,7 +431,9 @@ const updateStudent = async (req, res) => {
       ...(mother_tongue && { mother_tongue }),
       ...(blood_group && { blood_group }),
       ...(religion && { religion }),
-      ...(deposite_amount && { deposite_amount }),
+      ...(req.body.deposite_amount !== undefined && {
+        deposite_amount: student.deposite_amount + Number(req.body.deposite_amount)
+      }),
       ...(classId && { class_info: classId }),
       ...(location_id && { location_id }),
       ...(contact_number && { contact_number }),
@@ -437,15 +442,30 @@ const updateStudent = async (req, res) => {
 
     const updatedStudent = await studentModel.findByIdAndUpdate(id, studentUpdateData, { new: true });
 
-    // 9️⃣ Update user
+    // 8️⃣ Update user
     const userUpdateData = {
       ...(registration_number && { username: registration_number }),
       ...(student_name && { fullname: student_name }),
       ...(location_id && { location_id }),
       ...(descriptor !== undefined && { descriptor: descriptor || null })
     };
-
     const updatedUser = await userModel.findByIdAndUpdate(student.user_id, userUpdateData, { new: true });
+
+    // 9️⃣ Create Financial record if deposit changed
+    if (deposite_amount !== undefined && deposite_amount !== student.deposite_amount) {
+      const delta = deposite_amount - (student.deposite_amount || 0); // calculate added/removed deposit
+      if (delta !== 0) {
+        await financialModel.create({
+          student_id: student._id.toString(),
+          custodyType: "Student",
+          transaction: delta > 0 ? "DEPOSIT" : "WITHDRAW",
+          depositAmount: Math.abs(deposite_amount),
+          depositName: student.student_name,
+          type: "CASH",
+          status: "COMPLETED"
+        });
+      }
+    }
 
     // 🔟 Log audit
     await logAudit({
@@ -472,22 +492,14 @@ const updateStudent = async (req, res) => {
     console.error("❌ Error updating student:", error);
 
     try {
-      if (oldStudentData) {
-        await studentModel.findByIdAndUpdate(id, oldStudentData);
-      }
-
-      if (oldUserData) {
-        await userModel.findByIdAndUpdate(oldUserData._id, oldUserData);
-      }
-
+      // Rollback
+      if (oldStudentData) await studentModel.findByIdAndUpdate(id, oldStudentData);
+      if (oldUserData) await userModel.findByIdAndUpdate(oldUserData._id, oldUserData);
       if (uploadedProfilePic) {
         const filePath = path.join(__dirname, '..', uploadedProfilePic.file_url);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         await fileUploadModel.findByIdAndDelete(uploadedProfilePic._id);
       }
-
     } catch (rollbackErr) {
       console.error("⚠️ Rollback failed:", rollbackErr);
     }
@@ -499,6 +511,7 @@ const updateStudent = async (req, res) => {
     });
   }
 };
+
 
 const deleteStudent = async (req, res) => {
   const { id } = req.params;
@@ -560,6 +573,40 @@ const deleteStudent = async (req, res) => {
   } catch (error) {
     console.error("❌ Error deleting student:", error);
     return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+const getStudentById = async (req, res) => {
+  try {
+    const { id } = req.params; // student _id
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Student ID is missing" });
+    }
+
+    // 🔎 Find the student and populate related fields
+    const student = await studentModel.findById(id)
+      .populate('location_id', 'locationName')
+      .populate('class_info', 'class_name section academic_year')
+      .populate('pro_pic', 'file_name file_url uploaded_by');
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: "No student data found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: student,
+      message: "Student fetched successfully"
+    });
+
+  } catch (error) {
+    console.error('getStudentById error:', error);
+    res.status(500).json({
       success: false,
       message: "Internal server error",
       error: error.message
@@ -840,4 +887,4 @@ const fetchInmateDataUsingFace = async (req, res) => {
     return res.status(500).send({ success: false, message: "internal server down", error: error.message })
   }
 }
-module.exports = { createStudent, getStudents, deleteStudent, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace };
+module.exports = { createStudent, getStudents, deleteStudent,getStudentById, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace };

@@ -128,7 +128,6 @@ const getTransactionsByRange = async (req, res) => {
         .populate('products.productId')
         .lean(),
       Financial.find({ createdAt: { $gte: startDate } })
-        .populate('workAssignId')
         .lean()
     ]);
 

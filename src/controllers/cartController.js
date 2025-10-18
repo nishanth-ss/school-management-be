@@ -7,11 +7,13 @@ const { checkTransactionLimit, checkProductsLimit } = require("../utils/inmateTr
 const userModel = require("../model/userModel");
 const InmateLocation = require("../model/studentLocationModel");
 const inmateModel = require("../model/studentModel");
+const studentModel = require("../model/studentModel");
 
 const createPOSCart = async (req, res) => {
   try {
-    const { inmateId, totalAmount, products } = req.body;
-    const userData = await userModel.findById(req.user.id).populate("location_id")
+    console.log("<><>working")
+    const { studentId, totalAmount, products } = req.body;
+    const userData = await userModel.findById(req.user.id)
     location_id=userData.location_id
     if(!userData.location_id){
       return res.status(404).send({success:false,message:"This user has no location"})
@@ -19,16 +21,16 @@ const createPOSCart = async (req, res) => {
     if(userData.location_id.purchaseStatus === "denied"){
         return res.status(403).send({success:false,message:"Our application is undergoing maintenance. Please try again in a little while"})
     }
-      const depositLim = await checkTransactionLimit(inmateId,totalAmount,type="spend");
-         if(!depositLim.status){
-          return res.status(400).send({success:false,message:depositLim.message});
-         }
-    const checkRechargeTransactionLim = await checkProductsLimit(inmateId,products)
-    if(!checkRechargeTransactionLim.status){
-      return res.status(400).send({success:false,message:checkRechargeTransactionLim.message});
-    }
+    //   const depositLim = await checkTransactionLimit(studentId,totalAmount,type="spend");
+    //      if(!depositLim.status){
+    //       return res.status(400).send({success:false,message:depositLim.message});
+    //      }
+    // const checkRechargeTransactionLim = await checkProductsLimit(inmateId,products)
+    // if(!checkRechargeTransactionLim.status){
+    //   return res.status(400).send({success:false,message:checkRechargeTransactionLim.message});
+    // }
 
-    if (!inmateId || totalAmount === undefined || !Array.isArray(products) || products.length === 0) {
+    if (!studentId || totalAmount === undefined || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -39,13 +41,13 @@ const createPOSCart = async (req, res) => {
     }
 
     // Check inmate existence
-    const existingInmate = await Inmate.findOne({ inmateId });
-    if (!existingInmate) {
+    const existingStudent = await studentModel.findById(studentId)
+    if (!existingStudent) {
       return res.status(400).json({ success: false, message: "Inmate ID does not exist" });
     }
 
     // Check sufficient balance
-    if (existingInmate.balance < totalAmount) {
+    if (existingStudent.deposite_amount < totalAmount) {
       return res.status(400).json({ success: false, message: "Insufficient balance" });
     }
 
@@ -72,23 +74,23 @@ const createPOSCart = async (req, res) => {
     }
 
     // Create POS cart
-    const newCart = new POSShoppingCart({ inmateId, totalAmount, products });
+    const newCart = new POSShoppingCart({ student_id:studentId, totalAmount, products });
     const savedCart = await newCart.save();
 
     // Deduct balance
-    existingInmate.balance -= totalAmount;
-    await existingInmate.save();
+    existingStudent.deposite_amount -= totalAmount;
+    await existingStudent.save();
 
     // Audit log
     await logAudit({
       userId: req.user.id,
       username: req.user.username,
-      inmateId: inmateId,
+      inmateId: studentId,
       action: 'CREATE',
       targetModel: 'POSShoppingCart',
       targetId: savedCart._id,
-      description: `Created POS cart for inmate ${inmateId}`,
-      changes: { totalAmount, products, inmateId, custodyType: existingInmate.custodyType }
+      description: `Created POS cart for inmate ${studentId}`,
+      changes: { totalAmount, products, studentId }
     });
 
     res.status(201).json({ success: true, data: savedCart, message: "Cart created successfully" });
@@ -207,9 +209,9 @@ const reversePOSCart = async (req, res) => {
       return res.status(400).json({ success: false, message: "This order is already reversed" });
     }
 
-    const inmateData = await Inmate.findOne({ inmateId: posCartData.inmateId });
-    if (!inmateData) {
-      return res.status(404).json({ success: false, message: "Inmate not found" });
+    const studentData = await studentModel.findById( posCartData.student_id );
+    if (!studentData) {
+      return res.status(404).json({ success: false, message: "studentData not found" });
     }
 
     for (const item of posCartData.products) {
@@ -220,8 +222,8 @@ const reversePOSCart = async (req, res) => {
       );
     }
 
-    inmateData.balance += posCartData.totalAmount;
-    await inmateData.save();
+    studentData.deposite_amount += posCartData.totalAmount;
+    await studentData.save();
 
     posCartData.is_reversed = true;
     await posCartData.save();
@@ -232,10 +234,9 @@ const reversePOSCart = async (req, res) => {
       action: "DELETE",
       targetModel: "POSShoppingCart",
       targetId: posCartData._id,
-      description: `Reversed POS cart for inmate ${posCartData.inmateId} (Custody Type: ${inmateData.custodyType})`,
+      description: `Reversed POS cart for inmate ${posCartData.student_id}`,
       changes: {
-        ...posCartData.toObject(),
-        custodyType: inmateData.custodyType   
+        ...posCartData.toObject() 
       }
     });
 
@@ -244,7 +245,7 @@ const reversePOSCart = async (req, res) => {
       message: "POS order reversed successfully",
       data: {
         posCartData,
-        updatedInmateBalance: inmateData.balance
+        updatedInmateBalance: studentData.deposite_amount
       }
     });
   } catch (error) {

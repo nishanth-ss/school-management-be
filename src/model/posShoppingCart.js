@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const POSShoppingCartSchema = new mongoose.Schema(
   {
-    inmateId: { type: String, required: true, trim: true },
+    student_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref:"Student" },
     totalAmount: { type: Number, default: 0 },
     is_reversed:{type:Boolean, default:false},
     products: [

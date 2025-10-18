@@ -465,28 +465,35 @@ exports.transactionSummaryReport = async (req, res) => {
         const [posTransactions, financialTransactions] = await Promise.all([
             POSShoppingCart.find({ createdAt: { $gte: startDate } })
                 .populate("products.productId")
+                .populate("student_id")
                 .lean(),
-            Financial.find({ createdAt: { $gte: startDate } }).lean()
+            Financial.find({ createdAt: { $gte: startDate } })
+            .populate("student_id")
+            .lean()
         ]);
 
         // Merge data
         const allTransactions = [
-            ...posTransactions.map(tx => ({
-                inmateId: tx.inmateId,
+            ...posTransactions.map(tx => {
+                return ({
+                registration_number: tx.student_id.registration_number,
                 transaction: "POS Purchase",
                 source: "POS",
                 amount: tx.totalAmount,
                 type: "POS",
                 createdAt: tx.createdAt
-            })),
-            ...financialTransactions.map(tx => ({
-                inmateId: tx.inmateId,
+            })
+            }),
+            ...financialTransactions.map(tx => {
+                return ({
+                registration_number: tx.student_id.registration_number,
                 transaction: tx.transaction || "",
                 source: "FINANCIAL",
                 amount: tx.depositAmount || tx.wageAmount || 0,
                 type: tx.type,
                 createdAt: tx.createdAt
-            }))
+            })
+            })
         ];
 
         // Sort transactions by newest first
@@ -494,7 +501,7 @@ exports.transactionSummaryReport = async (req, res) => {
 
         // CSV Export
         if (format === "csv") {
-            const fields = ["inmateId", "transaction", "source", "amount", "type", "createdAt"];
+            const fields = ["registration_number", "transaction", "source", "amount", "type", "createdAt"];
             const parser = new Parser({ fields });
             const csv = parser.parse(allTransactions);
 
