@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.post("/create",createFinancial);
 router.get('/',getFinancial);
-router.get('/wages/download-csv/:id',downloadWagesCSV);
+router.get('/download-csv',downloadWagesCSV);
 router.get('/search',searchFinancial);
 router.get('/:id',getFinancialID);
 router.put('/:id',updateFinancial);

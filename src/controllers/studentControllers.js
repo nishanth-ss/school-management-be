@@ -5,7 +5,7 @@ const Inmate = require('../model/studentModel');
 const bcrypt = require("bcrypt")
 const fs = require('fs');
 const path = require('path');
-
+const moment = require('moment');
 const { Parser } = require('json2csv');
 const formatDateToYYYYMMDD = require("../utils/dateFormat");
 const financialModel = require("../model/financialModel");
@@ -614,7 +614,39 @@ const getStudentById = async (req, res) => {
   }
 };
 
+const getStudentByData = async (req, res) => {
+  try {
+    const { id } = req.user // student _id
 
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Student ID is missing" });
+    }
+
+    // 🔎 Find the student and populate related fields
+    const student = await studentModel.findOne({registration_number:req.params.regNo})
+      .populate('location_id', 'locationName')
+      .populate('class_info', 'class_name section academic_year')
+      .populate('pro_pic', 'file_name file_url uploaded_by');
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: "No student data found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: student,
+      message: "Student fetched successfully"
+    });
+
+  } catch (error) {
+    console.error('getStudentById error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
 
 const deleteInmate = async (req, res) => {
   try {
@@ -850,6 +882,111 @@ const getInmateTransactionData = async (req, res) => {
   // }
 };
 
+const getStudentTransactionData = async (req, res) => {
+  try {
+    const { id } = req.params; // student registration number
+    const {
+      page = 1,
+      limit = 10,
+      days,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      search = ''
+    } = req.query;
+
+    if (!id) {
+      return res.status(400).json({ message: "Student registration number is required" });
+    }
+
+    // 🧭 Find student by registration number to get _id
+    const student = await studentModel.findOne({ registration_number: id });
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const studentObjectId = student._id;
+    let filter = { student_id: studentObjectId };
+
+    // ⏳ Date filter
+    if (days) {
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - parseInt(days, 10));
+      filter.createdAt = { $gte: daysAgo };
+    }
+
+    // 🔍 Search filter (for depositor name, contact, or transaction)
+    if (search.trim()) {
+      filter.$or = [
+        { depositedBy: { $regex: search, $options: 'i' } },
+        { contactNumber: { $regex: search, $options: 'i' } },
+        { transaction: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // ✨ Fetch Financial & POS transactions in parallel
+    const [financialTransactions, posTransactions] = await Promise.all([
+      financialModel.find(filter)
+        .populate('student_id')
+        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+        .lean(),
+
+      POSShoppingCart.find({ student_id: studentObjectId })
+        .populate('products.productId')
+        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+        .lean()
+    ]);
+
+    // 🧾 Tag each transaction type
+    let allTransactions = [
+      ...financialTransactions.map(t => ({ ...t, source: 'FINANCIAL' })),
+      ...posTransactions.map(t => ({ ...t, source: 'POS' }))
+    ];
+
+    // 🪄 Sort combined transactions
+    allTransactions.sort((a, b) => {
+      const aDate = new Date(a[sortBy]);
+      const bDate = new Date(b[sortBy]);
+      return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+    });
+
+    // 📑 Paginate
+    const totalCount = allTransactions.length;
+    const paginatedTransactions = allTransactions.slice(skip, skip + limitNum);
+
+    // 🕒 Format date for frontend
+    const formattedTransactions = paginatedTransactions.map(trx => ({
+      ...trx,
+      createdAtFormatted: moment(trx.createdAt).format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    res.status(200).json({
+      success: true,
+      student: {
+        id: student._id,
+        registration_number: student.registration_number,
+        name: student.student_name
+      },
+      total: totalCount,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalCount / limitNum),
+      transactions: formattedTransactions,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student transactions",
+      error: error.message
+    });
+  }
+};
+
+
 const fetchInmateDataUsingFace = async (req, res) => {
   try {
     const { descriptor } = req.body
@@ -887,4 +1024,4 @@ const fetchInmateDataUsingFace = async (req, res) => {
     return res.status(500).send({ success: false, message: "internal server down", error: error.message })
   }
 }
-module.exports = { createStudent, getStudents, deleteStudent,getStudentById, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace };
+module.exports = { createStudent, getStudents, deleteStudent,getStudentById, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace,getStudentByData,getStudentTransactionData };
