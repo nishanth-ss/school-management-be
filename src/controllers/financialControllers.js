@@ -46,9 +46,9 @@ const downloadWagesCSV1 = async (req, res) => {
   }
 };
 
-const downloadWagesCSV = async (req, res) => {
+const downloadWagesCSV2 = async (req, res) => {
   try {
-    const {student_id} = req.query
+    const {student_id,format} = req.query
     let financialData;
     if (student_id) {
       financialData = await financialModel
@@ -113,7 +113,83 @@ const downloadWagesCSV = async (req, res) => {
   }
 };
 
+const downloadWagesCSV = async (req, res) => {
+  try {
+    const { student_id, format } = req.query;
+    let financialData;
 
+    if (student_id) {
+      financialData = await financialModel
+        .find({ student_id })
+        .populate("student_id");
+
+      financialData.sort((a, b) =>
+        a.student_id.registration_number.localeCompare(b.student_id.registration_number)
+      );
+    } else {
+      financialData = await financialModel.aggregate([
+        {
+          $lookup: {
+            from: "students",
+            localField: "student_id",
+            foreignField: "_id",
+            as: "student_id"
+          }
+        },
+        { $unwind: "$student_id" },
+        { $sort: { "student_id.registration_number": 1 } } // ✅ fixed field name
+      ]);
+    }
+
+    if (!financialData || financialData.length === 0) {
+      return res.status(404).json({ message: 'No wage records found to export' });
+    }
+
+    // Format the data
+    const formattedData = financialData.map(student => ({
+      registration_number: student.student_id.registration_number,
+      student_name: student.student_id.student_name,
+      depositAmount: student.depositAmount,
+      current_balance: student.student_id.deposite_amount,
+      depositor_name: student.depositedBy,
+      contact_number: student.contactNumber,
+      created_at: moment(student.createdAt).format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    // Return JSON if requested
+    if (format && format.toLowerCase() === 'json') {
+      return res.status(200).json({
+        success: true,
+        count: formattedData.length,
+        data: formattedData
+      });
+    }
+
+    // Otherwise, return CSV by default
+    const fields = [
+      'registration_number',
+      'student_name',
+      'depositAmount',
+      'current_balance',
+      'depositor_name',
+      'contact_number',
+      'created_at'
+    ];
+
+    const json2csvParser = new Parser({ fields });
+    const csv = json2csvParser.parse(formattedData);
+
+    res.setHeader('Content-Disposition', 'attachment; filename=wages.csv');
+    res.setHeader('Content-Type', 'text/csv');
+    res.status(200).end(csv);
+
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to export wages data',
+      error: err.message
+    });
+  }
+};
 
 // const createFinancial = async (req, res) => {
 //   try {
