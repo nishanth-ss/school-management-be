@@ -102,6 +102,73 @@ const downloadInmatesCSV = async (req, res) => {
   }
 };
 
+const downloadStudentsCSV = async (req, res) => {
+  try {
+    // Populate class_info to get class_name, section, academic_year
+    const students = await studentModel.find()
+      .populate('class_info')  // populate class info
+      .lean();
+
+    if (!students || students.length === 0) {
+      return res.status(404).json({ message: 'No students found to export' });
+    }
+
+    const fields = [
+      'registration_number',
+      'student_name',
+      'father_name',
+      'mother_name',
+      'date_of_birth',
+      'gender',
+      'birth_place',
+      'nationality',
+      'mother_tongue',
+      'blood_group',
+      'religion',
+      'deposite_amount',
+      'class_name',
+      'section',
+      'academic_year',
+      'contact_number'
+    ];
+
+    // Format student data
+    const formattedStudents = students.map(student => ({
+      registration_number: student.registration_number,
+      student_name: student.student_name,
+      father_name: student.father_name,
+      mother_name: student.mother_name,
+      date_of_birth: formatDateToYYYYMMDD(student.date_of_birth),
+      gender: student.gender,
+      birth_place: student.birth_place || '',
+      nationality: student.nationality || '',
+      mother_tongue: student.mother_tongue || '',
+      blood_group: student.blood_group || '',
+      religion: student.religion || '',
+      deposite_amount: student.deposite_amount,
+      class_name: student.class_info?.class_name || '',
+      section: student.class_info?.section || '',
+      academic_year: student.class_info?.academic_year || '',
+      contact_number: student.contact_number,
+      pro_pic: student.pro_pic || '',
+      location_id: student.location_id || ''
+    }));
+
+    const parser = new Parser({ fields });
+    const csv = parser.parse(formattedStudents);
+
+    res.setHeader('Content-Disposition', 'attachment; filename="students.csv"');
+    res.setHeader('Content-Type', 'text/csv');
+    res.status(200).send(csv);
+
+  } catch (err) {
+    console.error('❌ CSV export error:', err);
+    res.status(500).json({
+      message: 'Failed to export CSV',
+      error: err.message
+    });
+  }
+};
 
 const createStudent = async (req, res) => {
   let savedStudent = null;
@@ -1037,4 +1104,4 @@ const fetchInmateDataUsingFace = async (req, res) => {
     return res.status(500).send({ success: false, message: "internal server down", error: error.message })
   }
 }
-module.exports = { createStudent, getStudents, deleteStudent,getStudentById, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace,getStudentByData,getStudentTransactionData };
+module.exports = { createStudent, getStudents, deleteStudent,getStudentById,downloadStudentsCSV, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace,getStudentByData,getStudentTransactionData };
