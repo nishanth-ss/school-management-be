@@ -21,7 +21,7 @@ const getDashboardData = async (req, res) => {
         // 3. Today's POS transactions
         const todaysPOSTransactions = await POSShoppingCart.find({
             createdAt: { $gte: todayStart }
-        });
+        }).populate("student_id");
 
         // 4. Total POS sales today
         const totalSalesToday = todaysPOSTransactions.reduce((sum, trx) => sum + trx.totalAmount, 0);
@@ -37,7 +37,7 @@ const getDashboardData = async (req, res) => {
         // 7. Today's Financial transactions
         const todaysFinancialTransactions = await Financial.find({
             createdAt: { $gte: todayStart }
-        });
+        }).populate("student_id");
 
         // 8. Total wages + deposits today
         const totalFinancialToday = todaysFinancialTransactions.reduce((sum, trx) => {
@@ -48,6 +48,7 @@ const getDashboardData = async (req, res) => {
         const recentPOSTransactions = await POSShoppingCart.find()
             .sort({ createdAt: -1 })
             .limit(10)
+            .populate("student_id")
             .populate('products.productId');
 
         // 10. Recent Financial transactions

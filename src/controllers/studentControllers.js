@@ -182,24 +182,24 @@ const createStudent = async (req, res) => {
       pro_pic, contact_number, descriptor
     } = req.body;
 
- const missingFields = [];
-if (!registration_number) missingFields.push("registration_number");
-if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
-if (!contact_number) missingFields.push("contact_number");
-if (!student_name) missingFields.push("student_name");
-if (!father_name) missingFields.push("father_name");
-if (!mother_name) missingFields.push("mother_name");
-if (!date_of_birth) missingFields.push("date_of_birth");
-if (!gender) missingFields.push("gender");
-if (!class_info) missingFields.push("class_info");
-if (!location_id) missingFields.push("location_id");
+    const missingFields = [];
+    if (!registration_number) missingFields.push("registration_number");
+    if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
+    if (!contact_number) missingFields.push("contact_number");
+    if (!student_name) missingFields.push("student_name");
+    if (!father_name) missingFields.push("father_name");
+    if (!mother_name) missingFields.push("mother_name");
+    if (!date_of_birth) missingFields.push("date_of_birth");
+    if (!gender) missingFields.push("gender");
+    if (!class_info) missingFields.push("class_info");
+    if (!location_id) missingFields.push("location_id");
 
-if (missingFields.length > 0) {
-  return res.status(400).json({
-    success: false,
-    message: `Missing required fields: ${missingFields.join(", ")}`
-  });
-}
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(", ")}`
+      });
+    }
 
     const validGenders = ["Male", "Female", "Other"];
     if (!validGenders.includes(gender)) {
@@ -301,7 +301,9 @@ const getStudents = async (req, res) => {
       registration_number,
       gender,
       location_id,
-      class_name
+      class_name,
+      exactData,
+      search
     } = req.query;
 
     const order = sortOrder === 'asc' ? 1 : -1;
@@ -323,6 +325,21 @@ const getStudents = async (req, res) => {
 
     if (location_id) {
       searchFilter.location_id = location_id;
+    }
+    if (search) {
+      searchFilter.$or = [
+        { student_name: { $regex: search, $options: 'i' } },
+        { registration_number: { $regex: search, $options: 'i' } },
+        { class_name: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (exactData) {
+      searchFilter.$expr = {
+        $eq: [
+          { $toLower: "$registration_number" },
+          exactData.toLowerCase()
+        ]
+      };
     }
 
     // ✅ Handle class_name search (through populate)
@@ -368,8 +385,8 @@ const getStudents = async (req, res) => {
     ]);
 
     if (!students.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: 'No student data found',
         data: []
       });
@@ -703,7 +720,7 @@ const getStudentByData = async (req, res) => {
     }
 
     // 🔎 Find the student and populate related fields
-    const student = await studentModel.findOne({registration_number:req.params.regNo})
+    const student = await studentModel.findOne({ registration_number: req.params.regNo })
       .populate('location_id', 'locationName')
       .populate('class_info', 'class_name section academic_year')
       .populate('pro_pic', 'file_name file_url uploaded_by');
@@ -1104,4 +1121,4 @@ const fetchInmateDataUsingFace = async (req, res) => {
     return res.status(500).send({ success: false, message: "internal server down", error: error.message })
   }
 }
-module.exports = { createStudent, getStudents, deleteStudent,getStudentById,downloadStudentsCSV, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace,getStudentByData,getStudentTransactionData };
+module.exports = { createStudent, getStudents, deleteStudent, getStudentById, downloadStudentsCSV, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace, getStudentByData, getStudentTransactionData };

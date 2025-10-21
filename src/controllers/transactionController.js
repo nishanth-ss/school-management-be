@@ -125,6 +125,7 @@ const getTransactionsByRange = async (req, res) => {
     // 📊 Fetch POS & Financial transactions (including reversed)
     const [posTransactions, financialTransactions] = await Promise.all([
       POSShoppingCart.find({ createdAt: { $gte: startDate } })
+        .populate("student_id")
         .populate('products.productId')
         .lean(),
       Financial.find({ createdAt: { $gte: startDate } }).populate('student_id')

@@ -101,7 +101,7 @@ const createPOSCart = async (req, res) => {
 
 const getAllPOSCarts = async (req, res) => {
   try {
-    const carts = await POSShoppingCart.find().populate("products.productId").sort({ createdAt: -1 });
+    const carts = await POSShoppingCart.find().populate("products.productId").populate("student_id").sort({ createdAt: -1 });
 
     if (!carts || carts.length === 0) {
       return res.status(404).json({ success: false, message: "No carts found", data: [] });
@@ -121,7 +121,7 @@ const getPOSCartById = async (req, res) => {
       return res.status(400).json({ message: "Invalid cart ID format" });
     }
 
-    const cart = await POSShoppingCart.findById(id).populate("products.productId");
+    const cart = await POSShoppingCart.findById(id).populate("student_id").populate("products.productId");
 
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
