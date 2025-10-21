@@ -11,7 +11,6 @@ const studentModel = require("../model/studentModel");
 
 const createPOSCart = async (req, res) => {
   try {
-    console.log("<><>working")
     const { studentId, totalAmount, products } = req.body;
     const userData = await userModel.findById(req.user.id)
     location_id=userData.location_id
