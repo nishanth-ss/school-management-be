@@ -17,11 +17,14 @@ const moment = require("moment")
 // const { parse } =require('date-fns');
 const convertExcelDate = (excelDate) => {
   if (typeof excelDate === 'number') {
-    // Excel's 1900 date system
-    const date = new Date((excelDate - 25569) * 86400 * 1000);
-    return date;
-  }
-  return new Date(excelDate); // if already string
+    // Convert Excel serial number to JS date
+    const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+    return moment(date).format('DD-MM-YYYY'); // formatted as DD-MM-YYYY
+  } 
+  // If already a string, try parsing
+  const parsed = moment(excelDate, ['YYYY-MM-DD', 'DD-MM-YYYY']);
+  if (parsed.isValid()) return parsed.format('DD-MM-YYYY');
+  return null; // invalid date
 };
 
 const bulkUpsertInmates = async (req, res) => {
