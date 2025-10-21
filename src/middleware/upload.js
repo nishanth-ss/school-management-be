@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
+const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xlsx|csv/;
 
 const upload = multer({
   storage: storage,
