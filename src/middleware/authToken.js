@@ -21,7 +21,7 @@ const authenticateToken = (req, res, next) => {
     }
     const userExist = await userModel.findById(user.id);
     if(!userExist){
-      return res.status(403).send({success:false,message:"user does not exist"});
+      return res.status(403).send({success:false,message:"please check your credential (may be user deleted)"});
     }
     req.user = {
       id: user.id,
