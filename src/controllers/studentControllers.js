@@ -115,11 +115,24 @@ const createStudent = async (req, res) => {
       pro_pic, contact_number, descriptor
     } = req.body;
 
-    // 1️⃣ Validate required fields
-    if (!registration_number || !deposite_amount || !contact_number || !student_name || !father_name ||
-      !mother_name || !date_of_birth || !gender || !class_info || !location_id) {
-      return res.status(400).json({ success: false, message: "Missing required fields." });
-    }
+ const missingFields = [];
+if (!registration_number) missingFields.push("registration_number");
+if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
+if (!contact_number) missingFields.push("contact_number");
+if (!student_name) missingFields.push("student_name");
+if (!father_name) missingFields.push("father_name");
+if (!mother_name) missingFields.push("mother_name");
+if (!date_of_birth) missingFields.push("date_of_birth");
+if (!gender) missingFields.push("gender");
+if (!class_info) missingFields.push("class_info");
+if (!location_id) missingFields.push("location_id");
+
+if (missingFields.length > 0) {
+  return res.status(400).json({
+    success: false,
+    message: `Missing required fields: ${missingFields.join(", ")}`
+  });
+}
 
     const validGenders = ["Male", "Female", "Other"];
     if (!validGenders.includes(gender)) {
