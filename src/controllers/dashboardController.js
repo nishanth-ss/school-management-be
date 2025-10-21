@@ -51,7 +51,7 @@ const getDashboardData = async (req, res) => {
             .populate('products.productId');
 
         // 10. Recent Financial transactions
-        const recentFinancialTransactions = await Financial.find()
+        const recentFinancialTransactions = await Financial.find().populate("student_id")
             .sort({ createdAt: -1 })
             .limit(10);
 
