@@ -10,7 +10,19 @@ const InmateSchema = require("../model/studentModel");
 const userModel = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const InmateLocation = require('../model/studentLocationModel');
+const studentLocation = require('../model/studentLocationModel');
+const studentModel = require('../model/studentModel');
+const classModel = require('../model/classModel');
+const moment = require("moment")
 // const { parse } =require('date-fns');
+const convertExcelDate = (excelDate) => {
+  if (typeof excelDate === 'number') {
+    // Excel's 1900 date system
+    const date = new Date((excelDate - 25569) * 86400 * 1000);
+    return date;
+  }
+  return new Date(excelDate); // if already string
+};
 
 const bulkUpsertInmates = async (req, res) => {
   try {
@@ -174,6 +186,196 @@ const bulkUpsertInmates = async (req, res) => {
   }
 };
 
+const bulkUpsertStudents = async (req, res) => {
+  console.log("<><>workng");
+  
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const { location_id } = req.body;
+    if (!location_id) {
+      return res.status(400).json({ success: false, message: "location_id required" });
+    }
+
+    const ext = req.file.originalname.split('.').pop().toLowerCase();
+    let students = [];
+
+    if (ext === 'csv') {
+      const csvString = req.file.buffer.toString('utf-8');
+      students = parse(csvString, { columns: true, skip_empty_lines: true, trim: true });
+    } else if (ext === 'xlsx') {
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      students = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    } else {
+      return res.status(400).json({ success: false, message: "Unsupported file format. Upload CSV or XLSX." });
+    }
+
+    if (!Array.isArray(students) || students.length === 0) {
+      return res.status(400).json({ success: false, message: "Uploaded file contains no data" });
+    }
+
+    const results = { created: [], skipped: [], failed: [] };
+
+    for (const student of students) {
+      console.log("<><>student",student)
+      const {
+        registration_number,
+        student_name,
+        father_name,
+        mother_name,
+        gender,
+        birth_place,
+        nationality,
+        mother_tongue,
+        blood_group,
+        religion,
+        deposite_amount,
+        class_name,
+        section,
+        academic_year,
+        contact_number,
+        descriptor,
+        pro_pic
+      } = student;
+      let date_of_birth = convertExcelDate(student.date_of_birth)
+      console.log("<>><date_of_birth",date_of_birth);
+      
+
+      // Validate required fields
+      const missingFields = [];
+      if (!registration_number) missingFields.push("registration_number");
+      if (!student_name) missingFields.push("student_name");
+      if (!father_name) missingFields.push("father_name");
+      if (!mother_name) missingFields.push("mother_name");
+      if (!date_of_birth) missingFields.push("date_of_birth");
+      if (!gender) missingFields.push("gender");
+      if (!class_name) missingFields.push("class_name");
+      if (!section) missingFields.push("section");
+      if (!academic_year) missingFields.push("academic_year");
+      if (!contact_number) missingFields.push("contact_number");
+      if (deposite_amount == null) missingFields.push("deposite_amount");
+
+      if (missingFields.length > 0) {
+        results.failed.push({ registration_number: registration_number || "N/A", reason: `Missing required fields: ${missingFields.join(", ")}` });
+        continue;
+      }
+
+      // Validate gender
+      if (!["Male", "Female", "Other"].includes(gender)) {
+        results.failed.push({ registration_number, reason: `Invalid gender: ${gender}` });
+        continue;
+      }
+
+      // Validate location
+      const locationExists = await studentLocation.findById(location_id);
+      if (!locationExists) {
+        results.failed.push({ registration_number, reason: "Invalid location_id" });
+        continue;
+      }
+
+      // Check existing student
+      const existingStudent = await studentModel.findOne({ registration_number });
+      if (existingStudent) {
+        results.skipped.push({ registration_number, reason: "Duplicate registration_number — student already exists" });
+        continue;
+      }
+
+      // Create/find class
+      let classData = await classModel.findOne({ class_name, section, academic_year });
+      if (!classData) classData = await classModel.create({ class_name, section, academic_year });
+
+      // Create user
+      let savedUser;
+      try {
+        const hashedPassword = await bcrypt.hash(registration_number, 10);
+        savedUser = await userModel.create({
+          username: registration_number,
+          fullname: student_name,
+          password: hashedPassword,
+          role: 'student',
+          location_id,
+          descriptor: descriptor || null
+        });
+      } catch (err) {
+        results.failed.push({ registration_number, reason: `User creation failed: ${err.message}` });
+        continue;
+      }
+
+      // Create student
+      try {
+        const dob = moment(date_of_birth, ['YYYY-MM-DD', 'DD-MM-YYYY']).toDate();
+        if (!dob || isNaN(dob.getTime())) {
+          results.failed.push({ registration_number, reason: "Invalid date_of_birth format" });
+          if (savedUser) await userModel.findByIdAndDelete(savedUser._id);
+          continue;
+        }
+
+        const savedStudent = await studentModel.create({
+          registration_number,
+          student_name,
+          father_name,
+          mother_name,
+          date_of_birth: dob,
+          gender,
+          birth_place,
+          nationality,
+          mother_tongue,
+          blood_group,
+          religion,
+          deposite_amount,
+          class_info: classData._id,
+          location_id,
+          contact_number,
+          pro_pic: pro_pic || null,
+          user_id: savedUser._id
+        });
+
+        results.created.push({ registration_number, student_id: savedStudent._id });
+      } catch (err) {
+        if (savedUser) await userModel.findByIdAndDelete(savedUser._id);
+        results.failed.push({ registration_number, reason: `Student creation failed: ${err.message}` });
+      }
+    }
+
+    // Audit log
+    if (req.user) {
+      await logAudit({
+        userId: req.user.id,
+        username: req.user.username,
+        action: "BULK_UPLOAD",
+        targetModel: "Student",
+        targetId: null,
+        description: `Bulk student upload — Created: ${results.created.length}, Skipped: ${results.skipped.length}, Failed: ${results.failed.length}`,
+        changes: results
+      });
+    }
+
+    // Response
+    return res.status(200).json({
+      success: true,
+      message: "Bulk student upload completed",
+      summary: {
+        totalRecords: students.length,
+        created: results.created.length,
+        skipped: results.skipped.length,
+        failed: results.failed.length
+      },
+      details: results
+    });
+
+  } catch (error) {
+    console.error("❌ Bulk upload error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during bulk upload",
+      error: error.message
+    });
+  }
+};
+
 const bulkUpsertFinancial = async (req, res) => {
   try {
     await InmateLocation.findByIdAndUpdate(req.body.location, { $set: { purchaseStatus: "denied" } }).then(async (_d) => {
@@ -301,4 +503,4 @@ const bulkUpsertFinancial = async (req, res) => {
   }
 };
 
-module.exports = { bulkUpsertInmates, bulkUpsertFinancial };
+module.exports = { bulkUpsertInmates,bulkUpsertStudents, bulkUpsertFinancial };
