@@ -127,7 +127,7 @@ const getTransactionsByRange = async (req, res) => {
       POSShoppingCart.find({ createdAt: { $gte: startDate } })
         .populate('products.productId')
         .lean(),
-      Financial.find({ createdAt: { $gte: startDate } })
+      Financial.find({ createdAt: { $gte: startDate } }).populate('student_id')
         .lean()
     ]);
 

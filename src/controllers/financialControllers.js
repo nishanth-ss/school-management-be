@@ -351,7 +351,6 @@ const createFinancial = async (req, res) => {
       depositAmount,
       depositedBy,
       depositedById,
-      depositedByType,
       contactNumber,
       remarks
     } = req.body;
@@ -416,8 +415,7 @@ const createFinancial = async (req, res) => {
 
     await student.save();
 
-    // 👤 6. Handle depositor info (insider or outsider)
-    const finalDepositedByType = depositedByType || (depositedById ? 'USER' : 'OUTSIDER');
+    // // 👤 6. Handle depositor info (insider or outsider)
     // 🧾 7. Create financial transaction record
     const financial = new FinancialSchema({
       student_id,
@@ -432,7 +430,6 @@ const createFinancial = async (req, res) => {
       depositType,
       depositedBy,
       depositedById: depositedById || null,
-      depositedByType: finalDepositedByType,
       contactNumber: contactNumber || null,
       remarks: remarks || null
     });
