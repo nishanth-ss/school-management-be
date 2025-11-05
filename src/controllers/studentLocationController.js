@@ -1,9 +1,9 @@
 const studentLocation = require("../model/studentLocationModel");
 const UserSchema = require("../model/userModel")
-
+const axios = require('axios')
 exports.AddLocation = async (req, res) => {
     try {
-        const { locationName, custodyLimits } = req.body;
+        const { locationName,schoolName,baseUrl, custodyLimits } = req.body;
         if (!locationName) {
             return res.status(400).json({ success: false, message: "Location name is required." });
           }
@@ -13,9 +13,9 @@ exports.AddLocation = async (req, res) => {
       
           const checkLocationName = locationName.trim().toLowerCase();
           const existing = await studentLocation.findOne({ locationName: checkLocationName });
-          if (existing) {
-            return res.status(409).json({ success: false, message: "Location already exists." });
-          }
+          // if (existing) {
+          //   return res.status(409).json({ success: false, message: "Location already exists." });
+          // }
 
           // const allowedTypes = ['remand_prison', 'under_trail', 'contempt_of_court'];
           // for (const c of custodyLimits) {
@@ -24,10 +24,15 @@ exports.AddLocation = async (req, res) => {
           //   }
           // }
 
+        const payload = { name:schoolName,baseUrl:baseUrl,location:locationName}
+          const globalLocationRes = await axios.post(`${process.env.GLOBAL_URL}/api/location`,payload);
+          console.log("<><>globalLocationRes",globalLocationRes)
           const location = new studentLocation({
             locationName: checkLocationName,
             createdBy: req.user.id,
-            updatedBy: req.user.id
+            updatedBy: req.user.id,
+            schoolName:schoolName,
+            global_location_id:globalLocationRes.data._id
           });
 
           const result = await location.save();
@@ -43,7 +48,7 @@ exports.AddLocation = async (req, res) => {
             message: "Location created successfully."
           });
     } catch (error) {
-        res.status(500).send({ success: false, message: "internal server down",error:error.message })
+        res.status(500).send({ success: false, message: "internal server down", message:error.response.data.message?error.response.data.message:error.message })
     }
 }
 
@@ -98,7 +103,7 @@ exports.updateLocation = async (req, res) => {
     try {
         const { id } = req.params;
     // const { locationName, custodyLimits } = req.body;
-    const { locationName } = req.body;
+    const { locationName,schoolName,baseUrl } = req.body;
 
     // --- 1. Validate request ---
     // if (!locationName && !custodyLimits) {
@@ -122,11 +127,17 @@ exports.updateLocation = async (req, res) => {
         message: "Location not found with the provided ID."
       });
     }
-
+    const payload = {
+      name:schoolName,
+      baseUrl:baseUrl,
+      location:locationName
+    }
+    console.log("<><>payload",payload)
+    const globalLocationUpdateRes = await axios.put(`${process.env.GLOBAL_URL}/api/location/${existingLocation.global_location_id}`,payload);
     // --- 3. Prepare update data ---
     const updateData = { updatedBy: req.user.id };
     if (locationName) updateData.locationName = locationName.trim().toLowerCase();
-
+    if(schoolName) updateData.schoolName=schoolName.trim().toLowerCase()
     // if (custodyLimits) {
     //   if (!Array.isArray(custodyLimits) || custodyLimits.length === 0) {
     //     return res.status(400).json({
@@ -162,11 +173,8 @@ exports.updateLocation = async (req, res) => {
     });
 
     } catch (error) {
-        console.error("Error updating location:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error. Please try again later.",
-        });
+      console.log("<><>error",error)
+         res.status(500).send({ success: false, message: "internal server down", message:error.response.data.message?error.response.data.message:error.message })
     }
 };
 

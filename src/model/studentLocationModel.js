@@ -18,6 +18,13 @@ const studentLocationSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        global_location_id:{
+            type:String,
+            required:true
+        },
+        schoolName:{
+            type:String
+        },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',

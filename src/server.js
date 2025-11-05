@@ -10,6 +10,7 @@ dbConnect();
 // === Daily Backup at 12:00 AM ===
 scheduleBackup();           // initial schedule
 rescheduleBackupOnUpdate();
+const hostname = '0.0.0.0';
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname,'..', 'uploads')));
@@ -68,7 +69,7 @@ app.use("/upload",authenticateToken,fileUploadRoutes)
 // app.use("/student",authenticateToken,studentRoutes)
 
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, hostname, () => {
     console.log(`server running successfully on ${process.env.PORT}`)
     console.log('Running in', process.env.NODE_ENV, 'mode');
 })
