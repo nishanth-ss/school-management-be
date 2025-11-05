@@ -57,7 +57,8 @@ exports.login = async (req, res) => {
                 id: bestMatch.id,
                 username: bestMatch.username,
                 fullName: bestMatch.fullname,
-                role: bestMatch.role
+                role: bestMatch.role,
+                subscription:bestMatch.subscription
             },
             distance: minDistance
         });
