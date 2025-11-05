@@ -99,7 +99,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 username: user.username,
                 fullName: user.fullname,
-                role: user?.role
+                role: user?.role,
+                subscription:user?.subscription
             }
         });
     } catch (error) {
