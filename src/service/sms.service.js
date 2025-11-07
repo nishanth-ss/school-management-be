@@ -1,6 +1,8 @@
 const axios = require("axios");
 
 exports.sendSMS=async(otp,number)=>{
+    console.log("<><>otp",otp)
+    console.log("<><>number",otp)
     try {
         const message = `Your School Management OTP is ${otp}. Do not share it. Valid for 5 minutes.`;
         const response = await axios.post(
@@ -21,6 +23,7 @@ exports.sendSMS=async(otp,number)=>{
     );
     return { status:true, data:response.data}
     } catch (error) {
+        console.log("<><>error",error)
         return { status:false,message:`Something went wrong (${error.message})`}
     }
 }

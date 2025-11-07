@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
     inmateId:{type:String},
     descriptor:[Number],
     subscription:{type:Boolean,default:false},
+     subscriptionStart: { type: Date },
+    subscriptionEnd: { type: Date }, 
+
     otp:{type:String},
     otpExpiresAt: { type: Date },
     otpAttempts: { type: Number, default: 0 },

@@ -9,11 +9,7 @@ const studentModel = require('../model/studentModel');
 exports.createOrder = async (req, res) => {
     try {
         const { studentId, amount } = req.body;
-        console.log("<><>req.body", req.body);
-
-
         const studentData = await studentModel.findOne({ user_id: studentId })
-        console.log("<><>studentData", studentData)
         const shortReceipt = `order_${studentData.registration_number}_${Date.now().toString().slice(-6)}`;
         const order = await createOrder(amount, shortReceipt);
         console.log("<><>order", order)
@@ -35,7 +31,7 @@ exports.createOrder = async (req, res) => {
 // 2️⃣ Verify Payment
 exports.verifyPayment = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature,studentId } = req.body;
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;
         const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -51,10 +47,16 @@ exports.verifyPayment = async (req, res) => {
             { payment_id: razorpay_payment_id, status: 'paid' },
             { new: true }
         );
-
-        await Student.findByIdAndUpdate(transaction.student_id, {
-            $inc: { wallet_balance: transaction.amount }
+console.log("<><>studentId",studentId)
+        await userModel.findByIdAndUpdate(studentId, {
+            subscription: true,
+            subscriptionStart: new Date(),
+            subscriptionEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         });
+
+        // await Student.findByIdAndUpdate(transaction.student_id, {
+        //     $inc: { wallet_balance: transaction.amount }
+        // });
 
         res.json({ success: true, message: "Payment verified and wallet updated" });
     } catch (error) {

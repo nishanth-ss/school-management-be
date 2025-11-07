@@ -81,6 +81,32 @@ exports.login = async (req, res) => {
         }
 
         if (user.role === "student") {
+            if (user.subscription && user.subscriptionEnd <= Date.now()) {
+                // subscription expired → turn it off
+                user.subscription = false;
+                await user.save();
+            }
+
+            if (!user.subscription) {
+                // const token = jwt.sign(
+                //     { id: user.id, username: user.username, role: user.role },
+                //     process.env.JWT_SECRET,
+                //     { expiresIn: '24h' }
+                // );
+                return res.json({
+                    // token,
+                    status: false,
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.fullname,
+                        role: user?.role,
+                        subscription: user?.subscription
+                    },
+                    message: "user not subscribe"
+                });
+
+            }
             if (user.otpLockedUntil && user.otpLockedUntil > Date.now()) {
                 const minutesLeft = Math.ceil((user.otpLockedUntil - Date.now()) / 60000);
                 return res.status(429).send({
@@ -90,7 +116,7 @@ exports.login = async (req, res) => {
             }
             const studentData = await studentModel.findOne({ user_id: user._id })
 
-            const otp = Math.floor(1000 + Math.random() * 900000).toString();
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
             user.otp = otp;
             user.otpExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
@@ -99,10 +125,11 @@ exports.login = async (req, res) => {
             user.otpLockedUntil = null;
 
             await user.save();
-            const smsResponse = await sendSMS(otp, studentData.contact_number)
-            if (!smsResponse.status) {
-                return res.status(400).send({ status: false, message: smsResponse.message })
-            }
+            console.log("<><>otp", otp)
+            // const smsResponse = await sendSMS(otp, studentData.contact_number)
+            // if (!smsResponse.status) {
+            //     return res.status(400).send({ status: false, message: smsResponse.message })
+            // }
             await logAudit({
                 user: { id: user.id, username: user.username },
                 username: user.username,
@@ -111,7 +138,17 @@ exports.login = async (req, res) => {
                 targetId: user._id,
                 description: `User ${user.username} logged in`
             });
-            return res.status(200).send({ status: true, message: "OTP has been sent successfully to your registered mobile number" })
+            return res.status(200).send({
+                status: true,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    fullName: user.fullname,
+                    role: user?.role,
+                    subscription: user?.subscription
+                },
+                message: "OTP has been sent successfully to your registered mobile number"
+            })
 
         }
         const token = jwt.sign(
@@ -129,7 +166,7 @@ exports.login = async (req, res) => {
             description: `User ${user.username} logged in`
         });
 
-        res.json({
+        return res.json({
             token,
             user: {
                 id: user.id,
@@ -140,6 +177,7 @@ exports.login = async (req, res) => {
             }
         });
     } catch (error) {
+        console.log("error", error)
         return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
@@ -245,7 +283,6 @@ exports.verifyOTP = async (req, res) => {
         });
     }
 };
-
 
 exports.logout = async (req, res) => {
     try {
