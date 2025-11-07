@@ -31,8 +31,9 @@ const studentLocationRoutes = require('./routes/studentLocationRoutes')
 const inventoryRoutes = require('./routes/inventoryRoutes')
 const backupRoutes = require('./routes/backupRoutes')
 const fileUploadRoutes = require('./routes/fileUploadRoutes')
-// const studentRoutes = require('./routes/studentRoutesdelete')
+const paymentRoutes = require("./routes/paymentRoutes")
 const morgan = require("morgan");
+const { sendSMS } = require('./service/sms.service');
 
 // const allowedOrigins = ["http://localhost:5173"]
 
@@ -66,8 +67,7 @@ app.use("/location", authenticateToken, studentLocationRoutes)
 app.use('/inventory',authenticateToken,inventoryRoutes)
 app.use("/backup",authenticateToken,backupRoutes)
 app.use("/upload",authenticateToken,fileUploadRoutes)
-// app.use("/student",authenticateToken,studentRoutes)
-
+app.use("/payment",paymentRoutes)
 
 app.listen(process.env.PORT, hostname, () => {
     console.log(`server running successfully on ${process.env.PORT}`)

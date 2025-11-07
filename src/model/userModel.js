@@ -8,7 +8,12 @@ const userSchema = new mongoose.Schema({
     location_id:{type:mongoose.Schema.Types.ObjectId ,ref:"InmateLocation"},
     inmateId:{type:String},
     descriptor:[Number],
-    subscription:{type:Boolean,default:false}
+    subscription:{type:Boolean,default:false},
+    otp:{type:String},
+    otpExpiresAt: { type: Date },
+    otpAttempts: { type: Number, default: 0 },
+    otpAttemptedAt: { type: Date },
+    otpLockedUntil: { type: Date }
 },{timestamps: true});
 
 module.exports = mongoose.model('User',userSchema);
