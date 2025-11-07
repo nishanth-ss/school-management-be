@@ -125,11 +125,10 @@ exports.login = async (req, res) => {
             user.otpLockedUntil = null;
 
             await user.save();
-            console.log("<><>otp", otp)
-            // const smsResponse = await sendSMS(otp, studentData.contact_number)
-            // if (!smsResponse.status) {
-            //     return res.status(400).send({ status: false, message: smsResponse.message })
-            // }
+            const smsResponse = await sendSMS(otp, studentData.contact_number)
+            if (!smsResponse.status) {
+                return res.status(400).send({ status: false, message: smsResponse.message })
+            }
             await logAudit({
                 user: { id: user.id, username: user.username },
                 username: user.username,
