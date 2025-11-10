@@ -125,10 +125,12 @@ exports.login = async (req, res) => {
             user.otpLockedUntil = null;
 
             await user.save();
-            const smsResponse = await sendSMS(otp, studentData.contact_number)
-            if (!smsResponse.status) {
-                return res.status(400).send({ status: false, message: smsResponse.message })
-            }
+            // const smsResponse = await sendSMS(otp, studentData.contact_number)
+            console.log("<><>otp",otp);
+            
+            // if (!smsResponse.status) {
+            //     return res.status(400).send({ status: false, message: smsResponse.message })
+            // }
             await logAudit({
                 user: { id: user.id, username: user.username },
                 username: user.username,
@@ -139,6 +141,7 @@ exports.login = async (req, res) => {
             });
             return res.status(200).send({
                 status: true,
+                otp,
                 user: {
                     id: user.id,
                     username: user.username,

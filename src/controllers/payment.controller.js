@@ -4,6 +4,7 @@ const Transaction = require('../model/transactionModel.js');
 const { createOrder } = require('../service/razorpay.service.js');
 const userModel = require('../model/userModel.js');
 const studentModel = require('../model/studentModel');
+const financialModel = require('../model/financialModel.js');
 
 // 1️⃣ Create Razorpay Order
 exports.createOrder = async (req, res) => {
@@ -85,7 +86,7 @@ exports.parentCreatePayment = async(req, res)=>{
     }
 }
 
-exports.parentVerifyPayment = async (req, res) => {
+exports.parentVerifyPayment1 = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature,studentId } = req.body;
 
@@ -103,14 +104,100 @@ exports.parentVerifyPayment = async (req, res) => {
             { payment_id: razorpay_payment_id, status: 'paid' },
             { new: true }
         );
-        await Student.findByIdAndUpdate(transaction.student_id, {
-            $inc: { wallet_balance: transaction.amount }
-        });
+        console.log("<><>transaction",transaction)
+        const data = await Student.findOneAndUpdate(
+            {user_id:transaction.student_id}, 
+            { $inc: { deposite_amount: transaction.amount }}
+        );
+        console.log("<><>data",data)
 
         res.json({ success: true, message: "Payment verified and wallet updated" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Payment verification failed' });
     }
+};
+
+exports.parentVerifyPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      studentId,
+    } = req.body;
+
+    // 🔐 Step 1: Verify Razorpay signature
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
+    }
+
+    // 💳 Step 2: Update transaction status
+    const transaction = await Transaction.findOneAndUpdate(
+      { order_id: razorpay_order_id },
+      { payment_id: razorpay_payment_id, status: "paid" },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transaction not found" });
+    }
+
+    console.log("<><> transaction:", transaction);
+
+    // 🧾 Step 3: Update student's deposit amount
+    console.log("<><>studentId",studentId)
+    const student = await Student.findOneAndUpdate({user_id:studentId},
+      { $inc: { deposite_amount: transaction.amount } },
+      { new: true }
+    );
+
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+
+    console.log("<><> student:", student);
+
+    // 💰 Step 4: Create a financial record for this deposit
+    const financialData = {
+      student_id: student._id,
+      custodyType: "DEPOSIT", // or your own classification
+      transaction: transaction._id.toString(),
+      type: "CREDIT", // deposit = CREDIT
+      status: "SUCCESS",
+      depositName: student.name || "Parent Deposit",
+      relationShipId: student.parent_id || null, // if you store parent id in Student
+      depositAmount: transaction.amount,
+      depositType: "ONLINE_PAYMENT",
+      depositedByType: "USER", // assuming parent user
+      depositedById: transaction.created_by || null, // optional, from transaction
+      remarks: `Payment ID: ${razorpay_payment_id}`,
+    };
+
+    const finData = await financialModel.create(financialData);
+    console.log("<><>finData",finData)
+
+    res.json({
+      success: true,
+      message: "Payment verified, wallet updated, and financial record saved.",
+    });
+  } catch (error) {
+    console.error("Payment verify error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Payment verification failed" });
+  }
 };
 

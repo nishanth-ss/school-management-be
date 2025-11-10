@@ -6,7 +6,7 @@ router.post("/create",createOrder);
 router.post("/verify",verifyPayment);
 
 router.post("/parent/create",parentCreatePayment)
-router.post("/parent/create",parentVerifyPayment)
+router.post("/parent/verify",parentVerifyPayment)
 
 
 module.exports = router;
