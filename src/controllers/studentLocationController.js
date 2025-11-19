@@ -12,10 +12,10 @@ exports.AddLocation = async (req, res) => {
           // }
       
           const checkLocationName = locationName.trim().toLowerCase();
-          const existing = await studentLocation.findOne({ locationName: checkLocationName });
-          // if (existing) {
-          //   return res.status(409).json({ success: false, message: "Location already exists." });
-          // }
+          const existing = await studentLocation.find();
+          if (existing) {
+            return res.status(409).json({ success: false, message: "Location already exists." });
+          }
 
           // const allowedTypes = ['remand_prison', 'under_trail', 'contempt_of_court'];
           // for (const c of custodyLimits) {
@@ -26,7 +26,6 @@ exports.AddLocation = async (req, res) => {
 
         const payload = { name:schoolName,baseUrl:baseUrl,location:locationName}
           const globalLocationRes = await axios.post(`${process.env.GLOBAL_URL}/api/location`,payload);
-          console.log("<><>globalLocationRes",globalLocationRes)
           const location = new studentLocation({
             locationName: checkLocationName,
             createdBy: req.user.id,

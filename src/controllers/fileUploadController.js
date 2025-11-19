@@ -61,7 +61,6 @@ const updateProPic = async (req, res) => {
 
     // 1️⃣ Check if file exists in DB
     const existingFile = await fileUploadModel.findById(fileId);
-    console.log("<><>existingFile",existingFile.file_url)
     if (!existingFile) {
         fs.unlinkSync(req.file.path);
       return res.status(404).json({ success: false, message: 'File not found' });

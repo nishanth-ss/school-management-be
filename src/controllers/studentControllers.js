@@ -1059,7 +1059,6 @@ const getStudentTransactionData = async (req, res) => {
       ...trx,
       createdAtFormatted: moment(trx.createdAt).format('YYYY-MM-DD HH:mm:ss')
     }));
-
     res.status(200).json({
       success: true,
       student: {

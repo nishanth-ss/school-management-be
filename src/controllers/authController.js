@@ -126,7 +126,6 @@ exports.login = async (req, res) => {
 
             await user.save();
             // const smsResponse = await sendSMS(otp, studentData.contact_number)
-            console.log("<><>otp",otp);
             
             // if (!smsResponse.status) {
             //     return res.status(400).send({ status: false, message: smsResponse.message })
@@ -179,7 +178,6 @@ exports.login = async (req, res) => {
             }
         });
     } catch (error) {
-        console.log("error", error)
         return res.status(500).json({ message: "Internal server error", error: error.message });
     }
 }
