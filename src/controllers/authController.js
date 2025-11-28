@@ -6,10 +6,32 @@ const logAudit = require('../utils/auditlogger');
 const tokenBlacklist = require("../utils/blackList");
 const { sendSMS } = require("../service/sms.service");
 const studentModel = require("../model/studentModel");
+const { default: axios } = require("axios");
 
 exports.login = async (req, res) => {
     try {
         const { username, password, descriptor } = req.body;
+        if(username === "Super Admin"){
+            const admindata = await axios.post(`${process.env.GLOBAL_URL}/api/login`,{username,password})
+            const user = admindata.data
+            if(!user.status){
+                return res.status(user.statuscode).send({status:false,message:user.message})
+            }
+            const { userData } = user
+            
+             const token = jwt.sign(
+            { id: userData._id, username: userData.username, role: userData.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        return res.status(200).send({status:true,token,user: {
+                    id: userData._id,
+                    username: userData.username,
+                    fullName: userData.fullname,
+                    role: userData.role,
+                    subscription: userData.subscription || true
+                }})
+        }
         if (descriptor) {
             const allUsers = await UserSchema.find({}, { descriptor: 1, username: 1, role: 1, fullname: 1 });
             function euclideanDistance(desc1, desc2) {
@@ -123,7 +145,7 @@ exports.login = async (req, res) => {
             user.otpAttempts = 0;
             user.otpAttemptedAt = null;
             user.otpLockedUntil = null;
-
+console.log("<><>otp",otp)
             await user.save();
             // const smsResponse = await sendSMS(otp, studentData.contact_number)
             

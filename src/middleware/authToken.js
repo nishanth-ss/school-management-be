@@ -33,7 +33,6 @@ const authenticateToken = (req, res, next) => {
       const studentData = await studentModel.findOne({user_id:user.id})
       
       if (!userExist.subscription) {
-        console.log("<><>studentData._id",studentData._id)
          const data = await axios.put(`${process.env.GLOBAL_URL}/api/payment/update`,{studentId:studentData._id})
         return res.status(403).json({
           success: false,

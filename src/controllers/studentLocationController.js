@@ -131,7 +131,6 @@ exports.updateLocation = async (req, res) => {
       baseUrl:baseUrl,
       location:locationName
     }
-    console.log("<><>payload",payload)
     const globalLocationUpdateRes = await axios.put(`${process.env.GLOBAL_URL}/api/location/${existingLocation.global_location_id}`,payload);
     // --- 3. Prepare update data ---
     const updateData = { updatedBy: req.user.id };
@@ -172,7 +171,6 @@ exports.updateLocation = async (req, res) => {
     });
 
     } catch (error) {
-      console.log("<><>error",error)
          res.status(500).send({ success: false, message: "internal server down", message:error.response.data.message?error.response.data.message:error.message })
     }
 };
