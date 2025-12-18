@@ -12,6 +12,13 @@ scheduleBackup();           // initial schedule
 rescheduleBackupOnUpdate();
 const hostname = '0.0.0.0';
 
+// <<<=== ADD THIS HERE: Preload Face Recognition Models ===>>>
+// const { loadModels } = require('./service/faceMatchService');
+// loadModels()
+//   .then(() => console.log('Models preloaded successfully'))
+//   .catch(err => console.error('Model load failed:', err));
+// <<<=== END ===>>>
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname,'..', 'uploads')));
 const authRoutes = require("./routes/authRoutes");

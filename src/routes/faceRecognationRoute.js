@@ -6,8 +6,8 @@ const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 
 
-router.post("/register-face",upload.any(),registerFaceID)
-router.post("/login-face",upload.none(),loginFaceID)
+router.post("/register-face",upload.single("face"),registerFaceID)
+router.post("/login-face",upload.single("face"),loginFaceID)
 
 
 module.exports = router;
