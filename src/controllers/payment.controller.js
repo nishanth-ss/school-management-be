@@ -20,7 +20,8 @@ exports.createOrder = async (req, res) => {
       amount,
       shortReceipt, studentData,
       locationId: schoolData[0].global_location_id,
-      subscription_type: "MONTHLY"
+      subscription_type: "MONTHLY",
+      student_info:studentData
     }
      orderData = await axios.post(`${process.env.GLOBAL_URL}/api/payment/create`, payload)
      orderData = orderData.data

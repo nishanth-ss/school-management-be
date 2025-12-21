@@ -121,6 +121,10 @@ exports.loginFaceID = async (req, res) => {
         for (const user of usersWithFace) {
             const distance = euclideanDistanceVerify(user.descriptor || [], loginEmbedding);
             if (distance < 7.5) { // Match threshold
+                console.log("<><>distance",distance);
+                console.log("<><>user",user);
+                
+                
                 // ✅ Check subscription for students
                 if (user.role === "student") {
                     if (user.subscription && user.subscriptionEnd <= Date.now()) {

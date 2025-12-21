@@ -1,7 +1,8 @@
 const express = require('express');
-const { createStudent, getStudents, updateStudent, searchInmates, deleteInmate, downloadInmatesCSV, getInmateUsingInmateID,getStudentTransactionData, getInmateTransactionData, fetchInmateDataUsingFace, getStudentById, getStudentByData, downloadStudentsCSV } = require('../controllers/studentControllers');
+const { createStudent, getStudents, updateStudent, searchInmates, deleteInmate, downloadInmatesCSV, getInmateUsingInmateID,getStudentTransactionData, getInmateTransactionData, fetchInmateDataUsingFace, getStudentById, getStudentByData, downloadStudentsCSV, getStudentByIdProfile } = require('../controllers/studentControllers');
 const authenticateToken = require('../middleware/authToken');
 const router = express.Router();
+router.get('/info/:id',getStudentByIdProfile);
 
 router.use(authenticateToken)
 router.post("/create",createStudent);

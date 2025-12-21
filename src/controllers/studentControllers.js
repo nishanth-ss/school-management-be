@@ -711,6 +711,40 @@ const getStudentById = async (req, res) => {
   }
 };
 
+const getStudentByIdProfile = async (req, res) => {
+  try {
+    const { id } = req.params; // student _id
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Student ID is missing" });
+    }
+
+    // 🔎 Find the student and populate related fields
+    const student = await studentModel.findById(id)
+      .populate('location_id', 'locationName')
+      .populate('class_info', 'class_name section academic_year')
+      .populate('pro_pic', 'file_name file_url uploaded_by');
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: "No student data found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: student,
+      message: "Student fetched successfully"
+    });
+
+  } catch (error) {
+    console.error('getStudentById error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
 const getStudentByData = async (req, res) => {
   try {
     const { id } = req.user // student _id
@@ -1120,4 +1154,4 @@ const fetchInmateDataUsingFace = async (req, res) => {
     return res.status(500).send({ success: false, message: "internal server down", error: error.message })
   }
 }
-module.exports = { createStudent, getStudents, deleteStudent, getStudentById, downloadStudentsCSV, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace, getStudentByData, getStudentTransactionData };
+module.exports = { createStudent, getStudents, deleteStudent, getStudentById, downloadStudentsCSV, updateStudent, deleteInmate, searchInmates, downloadInmatesCSV, getInmateUsingInmateID, getInmateTransactionData, fetchInmateDataUsingFace, getStudentByData, getStudentTransactionData,getStudentByIdProfile };

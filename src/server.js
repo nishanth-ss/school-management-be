@@ -40,6 +40,7 @@ const backupRoutes = require('./routes/backupRoutes')
 const fileUploadRoutes = require('./routes/fileUploadRoutes')
 const paymentRoutes = require("./routes/paymentRoutes")
 const faceRouted = require("./routes/faceRecognationRoute")
+const globalRoutes = require("./routes/globalServerRoutes")
 const morgan = require("morgan");
 const { sendSMS } = require('./service/sms.service');
 
@@ -59,6 +60,7 @@ app.use(cors());
 app.use(morgan(":method :url :status :response-time ms"));
 app.use("/user", authRoutes);
 
+app.use("/student-pro", studentRoutes);
 app.use("/student", authenticateToken, studentRoutes);
 app.use("/financial", authenticateToken, financialRoutes);
 app.use("/tuck-shop", authenticateToken, tuckShopRoutes);
@@ -78,6 +80,8 @@ app.use("/backup",authenticateToken,backupRoutes)
 app.use("/upload",authenticateToken,fileUploadRoutes)
 app.use("/payment",paymentRoutes)
 app.use("/face",faceRouted)
+app.use("/api/subscribers",globalRoutes)
+
 
 app.listen(process.env.PORT, hostname, () => {
     console.log(`server running successfully on ${process.env.PORT}`)
