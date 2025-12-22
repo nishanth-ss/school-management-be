@@ -213,3 +213,15 @@ exports.deleteLocation = async (req, res) => {
         });
     }
 };
+
+exports.adminUpdateLocation = async(req,res)=>{
+  try {
+    const response = await axios.put(`${process.env.GLOBAL_URL}/api/location/${req.params.id}`,req.body)
+    if(response.data.status){
+      return res.status(200).send({status:true,data:response.data.data,message:response.data.message})
+    }
+    
+  } catch (error) {
+    return res.status(500).send({status:false,message:"internal server down"})
+  }
+}

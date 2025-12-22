@@ -24,7 +24,7 @@ exports.createOrder = async (req, res) => {
       student_info:studentData
     }
      orderData = await axios.post(`${process.env.GLOBAL_URL}/api/payment/create`, payload)
-     orderData = orderData.data
+     orderData = orderData.data     
     if(orderData?.subscription){
       return res.status(200).send({status:true,message:orderData.message})
     }
@@ -36,8 +36,7 @@ exports.createOrder = async (req, res) => {
       user_id: studentData.user_id
     });
     await transaction.save();
-
-    res.status(200).json({ success: true, order });
+    res.status(200).json({ success: true, order, message:orderData?.data?.message || "default message" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Order creation failed' });

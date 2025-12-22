@@ -47,5 +47,8 @@
     "npm": "^11.6.1",
     "razorpay": "^2.9.6",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^5.1.0"
   }
 }
