@@ -203,7 +203,7 @@ exports.parentVerifyPayment = async (req, res) => {
       remarks: `Payment ID: ${razorpay_payment_id}`,
     };
 
-    // const finData = await financialModel.create(financialData);
+    const finData = await financialModel.create(financialData);
     res.json({
       success: true,
       message: "Payment verified, wallet updated, and financial record saved.",
