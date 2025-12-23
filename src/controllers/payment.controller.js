@@ -8,7 +8,7 @@ const financialModel = require('../model/financialModel.js');
 const studentLocation = require('../model/studentLocationModel.js');
 const { default: axios } = require('axios');
 
-// 1️⃣ Create Razorpay Order
+// 1️⃣ Create Razorpay Order global server
 exports.createOrder = async (req, res) => {
   try {
     const { studentId, amount } = req.body;
@@ -29,13 +29,13 @@ exports.createOrder = async (req, res) => {
       return res.status(200).send({status:true,message:orderData.message})
     }
     const order = orderData.order
-    const transaction = new Transaction({
-      student_id: studentId,
-      order_id: order.id,
-      amount,
-      user_id: studentData.user_id
-    });
-    await transaction.save();
+    // const transaction = new Transaction({
+    //   student_id: studentId,
+    //   order_id: order.id,
+    //   amount,
+    //   user_id: studentData.user_id
+    // });
+    // await transaction.save();
     res.status(200).json({ success: true, order, message:orderData?.data?.message || "default message" });
   } catch (error) {
     console.error(error);
@@ -54,20 +54,20 @@ exports.verifyPayment = async (req, res) => {
     //   return res.status(400).json({ success: false, message: "Invalid signature" });
     // }
 
-    const transaction = await Transaction.findOneAndUpdate(
-      { order_id: razorpay_order_id },
-      { payment_id: razorpay_payment_id, status: 'paid' },
-      { new: true }
-    );
-    const studentData = await studentModel.findOne({user_id:studentId})
-    const financialData ={
-      student_id:studentData._id,
-      transaction:"TRANSFER",
-      depositType:"UPI",
-      status:"SUCCESS",
-      depositAmount:expectedSignature.data.subscription.amount
-    } 
-    const fin = await financialModel.create(financialData)
+    // const transaction = await Transaction.findOneAndUpdate(
+    //   { order_id: razorpay_order_id },
+    //   { payment_id: razorpay_payment_id, status: 'paid' },
+    //   { new: true }
+    // );
+    // const studentData = await studentModel.findOne({user_id:studentId})
+    // const financialData ={
+    //   student_id:studentData._id,
+    //   transaction:"TRANSFER",
+    //   depositType:"UPI",
+    //   status:"SUCCESS",
+    //   depositAmount:expectedSignature.data.subscription.amount
+    // } 
+    // const fin = await financialModel.create(financialData)
     
     await userModel.findByIdAndUpdate(studentId, {
       subscription: true,
@@ -79,7 +79,7 @@ exports.verifyPayment = async (req, res) => {
     //     $inc: { wallet_balance: transaction.amount }
     // });
 
-    res.json({ success: true, message: "Payment verified and wallet updated" });
+    res.json({ success: true, message: "Payment ]Subscription is updated" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Payment verification failed' });

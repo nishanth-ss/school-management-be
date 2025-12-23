@@ -1,7 +1,7 @@
 const express = require('express');
 const { createOrder, verifyPayment, parentCreatePayment, parentVerifyPayment } = require('../controllers/payment.controller');
 const router = express.Router();
-
+//gloabal server
 router.post("/create",createOrder);
 router.post("/verify",verifyPayment);
 
