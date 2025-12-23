@@ -311,7 +311,6 @@ exports.transferInventoryToCanteenInventory = async (req, res) => {
     let remaining = transferQty;
     const bulkOps = [];
     for (const doc of storeItems) {
-      console.log("<><>doc",doc)
       if (remaining <= 0) break;
       if (doc.stock <= remaining) {
         bulkOps.push({ updateOne: { filter: { _id: doc._id }, update: { $set: { stock: 0 } } } });

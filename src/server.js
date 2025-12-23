@@ -10,6 +10,14 @@ dbConnect();
 // === Daily Backup at 12:00 AM ===
 scheduleBackup();           // initial schedule
 rescheduleBackupOnUpdate();
+const hostname = '0.0.0.0';
+
+// <<<=== ADD THIS HERE: Preload Face Recognition Models ===>>>
+// const { loadModels } = require('./service/faceMatchService');
+// loadModels()
+//   .then(() => console.log('Models preloaded successfully'))
+//   .catch(err => console.error('Model load failed:', err));
+// <<<=== END ===>>>
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname,'..', 'uploads')));
@@ -30,8 +38,11 @@ const studentLocationRoutes = require('./routes/studentLocationRoutes')
 const inventoryRoutes = require('./routes/inventoryRoutes')
 const backupRoutes = require('./routes/backupRoutes')
 const fileUploadRoutes = require('./routes/fileUploadRoutes')
-// const studentRoutes = require('./routes/studentRoutesdelete')
+const paymentRoutes = require("./routes/paymentRoutes")
+const faceRouted = require("./routes/faceRecognationRoute")
+const globalRoutes = require("./routes/globalServerRoutes")
 const morgan = require("morgan");
+const { sendSMS } = require('./service/sms.service');
 
 // const allowedOrigins = ["http://localhost:5173"]
 
@@ -48,6 +59,8 @@ const morgan = require("morgan");
 app.use(cors());
 app.use(morgan(":method :url :status :response-time ms"));
 app.use("/user", authRoutes);
+
+app.use("/student-pro", studentRoutes);
 app.use("/student", authenticateToken, studentRoutes);
 app.use("/financial", authenticateToken, financialRoutes);
 app.use("/tuck-shop", authenticateToken, tuckShopRoutes);
@@ -60,15 +73,17 @@ app.use("/reports", authenticateToken, reportRoutes);
 app.use("/logs", authenticateToken, auditLogsRoutes);
 app.use("/bulk-oprations", authenticateToken, bulkOperations);
 app.use("/department", authenticateToken, departmentRoles);
-app.use("/location", authenticateToken, studentLocationRoutes)
+app.use("/location", studentLocationRoutes)
 // inventory and canteen operation
 app.use('/inventory',authenticateToken,inventoryRoutes)
 app.use("/backup",authenticateToken,backupRoutes)
 app.use("/upload",authenticateToken,fileUploadRoutes)
-// app.use("/student",authenticateToken,studentRoutes)
+app.use("/payment",paymentRoutes)
+app.use("/face",faceRouted)
+app.use("/api/subscribers",globalRoutes)
 
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, hostname, () => {
     console.log(`server running successfully on ${process.env.PORT}`)
     console.log('Running in', process.env.NODE_ENV, 'mode');
 })

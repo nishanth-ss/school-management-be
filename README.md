@@ -12,3 +12,4 @@ GET [/api/vendor-purchases?sortField=totalAmount&sortOrder=asc](http://localhost
 GET /canteen?search=chips
 GET /canteen?search=ITM001
 GET /canteen?search=Snacks&page=2&limit=20
+

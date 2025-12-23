@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 const financialSchema = new mongoose.Schema({
     student_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Student" },
-    custodyType: { type: String, required: true },
-    transaction: { type: String },
+    custodyType: { type: String}, 
+    transaction: { type: String },  // "CREDIT", "DEBIT", "TRANSFER", "REFUND"
     hoursWorked: { type: Number, default: 0 },
     wageAmount: { type: Number, default: 0 },
 
@@ -11,9 +11,9 @@ const financialSchema = new mongoose.Schema({
     depositName: { type: String },
     relationShipId: { type: String },
     depositAmount: { type: Number, default: 0 },
-    depositType: { type: String },
-    type: { type: String, required: true },
-    status: { type: String, required: true },
+    depositType: { type: String }, // "CASH", "BANK", "ONLINE", "CHEQUE", "UPI", "OTHER"
+    type: { type: String}, // "DEPOSIT", "WITHDRAWAL", "WAGES".
+    status: { type: String, required: true }, // "SUCCESS", "FAILED", "PENDING"
 
     // 🆕 Additional fields
     depositedByType: { 

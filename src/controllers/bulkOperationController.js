@@ -190,7 +190,6 @@ const bulkUpsertInmates = async (req, res) => {
 };
 
 const bulkUpsertStudents = async (req, res) => {
-  console.log("<><>workng");
   
   try {
     if (!req.file) {
@@ -223,7 +222,6 @@ const bulkUpsertStudents = async (req, res) => {
     const results = { created: [], skipped: [], failed: [] };
 
     for (const student of students) {
-      console.log("<><>student",student)
       const {
         registration_number,
         student_name,
@@ -244,7 +242,6 @@ const bulkUpsertStudents = async (req, res) => {
         pro_pic
       } = student;
       let date_of_birth = convertExcelDate(student.date_of_birth)
-      console.log("<>><date_of_birth",date_of_birth);
       
 
       // Validate required fields
