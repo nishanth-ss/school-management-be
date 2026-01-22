@@ -47,7 +47,7 @@ exports.faceRecognitionExcludeUserService = async (descriptor, user_id) => {
     let minDistance = Infinity;
 
     for (const user of allUsers) {
-        if (!user.descriptor || user.descriptor.length !== descriptor.length) continue;
+        if (!user.descriptor || !Array.isArray(user.descriptor) || !Array.isArray(descriptor) || user.descriptor.length !== descriptor.length) continue;
 
         const dist = euclideanDistance(user.descriptor, descriptor);
         if (dist < minDistance) {

@@ -10,13 +10,13 @@ const { findByIdAndUpdate } = require("../model/departmentModel");
 
 const defaultUser = async (req, res) => {
     try {
-        const users = await UserSchema.find({});
+        const users = await UserSchema.find({username:'Admin'});
         if (users.length === 0) {
             const hashedPassword = await bcrypt.hash("admin@123", 10);
 
             const newUser = new UserSchema({
                 username: "Admin",
-                fullname: "Super Admin",
+                fullname: "Admin",
                 password: hashedPassword,
                 role: "ADMIN",
             });
