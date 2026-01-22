@@ -12,7 +12,7 @@ exports.AddLocation = async (req, res) => {
           // }
       
           const checkLocationName = locationName.trim().toLowerCase();
-          const existing = await studentLocation.find();
+          const existing = await studentLocation.findOne();
           if (existing) {
             return res.status(409).json({ success: false, message: "Location already exists." });
           }
@@ -47,6 +47,8 @@ exports.AddLocation = async (req, res) => {
             message: "Location created successfully."
           });
     } catch (error) {
+      console.log("<><>error",error);
+      
         res.status(500).send({ success: false, message: "internal server down", message:error.response.data.message?error.response.data.message:error.message })
     }
 }

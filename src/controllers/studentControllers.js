@@ -237,7 +237,7 @@ const createStudent = async (req, res) => {
       username: registration_number,
       fullname: student_name,
       password: hashedPassword,
-      role: 'student',
+      role: 'STUDENT',
       location_id,
       descriptor: descriptor || null
     });
