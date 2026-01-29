@@ -30,7 +30,6 @@ async function syncToGlobal(location) {
 }
 
 async function syncUpdateToGlobal(location) {
-    
   try {
     const payload = {
       name: location.schoolName,

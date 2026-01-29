@@ -145,9 +145,11 @@ exports.login = async (req, res) => {
             user.otpAttempts = 0;
             user.otpAttemptedAt = null;
             user.otpLockedUntil = null;
-console.log("<><>otp",otp)
+// console.log("<><>otp",otp)
+// console.log("<><>studentData",studentData);
+
             await user.save();
-            // const smsResponse = await sendSMS(otp, studentData.contact_number)
+             const smsResponse = await sendSMS(otp, studentData.contact_number)
             
             // if (!smsResponse.status) {
             //     return res.status(400).send({ status: false, message: smsResponse.message })
