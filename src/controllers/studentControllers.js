@@ -184,15 +184,15 @@ const createStudent = async (req, res) => {
 
     const missingFields = [];
     if (!registration_number) missingFields.push("registration_number");
-    if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
+    // if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
     if (!contact_number) missingFields.push("contact_number");
     if (!student_name) missingFields.push("student_name");
     if (!father_name) missingFields.push("father_name");
     if (!mother_name) missingFields.push("mother_name");
-    if (!date_of_birth) missingFields.push("date_of_birth");
-    if (!gender) missingFields.push("gender");
-    if (!class_info) missingFields.push("class_info");
-    if (!location_id) missingFields.push("location_id");
+    // if (!date_of_birth) missingFields.push("date_of_birth");
+    // if (!gender) missingFields.push("gender");
+    // if (!class_info) missingFields.push("class_info");
+    // if (!location_id) missingFields.push("location_id");
 
     if (missingFields.length > 0) {
       return res.status(400).json({
