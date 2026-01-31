@@ -192,7 +192,7 @@ const createStudent = async (req, res) => {
     // if (!date_of_birth) missingFields.push("date_of_birth");
     // if (!gender) missingFields.push("gender");
     // if (!class_info) missingFields.push("class_info");
-    // if (!location_id) missingFields.push("location_id");
+    if (!location_id) missingFields.push("location_id");
 
     if (missingFields.length > 0) {
       return res.status(400).json({
