@@ -181,7 +181,6 @@ const createStudent = async (req, res) => {
       blood_group, religion, deposite_amount, class_info, location_id,
       pro_pic, contact_number, descriptor
     } = req.body;
-
     const missingFields = [];
     if (!registration_number) missingFields.push("registration_number");
     // if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
@@ -205,6 +204,7 @@ const createStudent = async (req, res) => {
     if (!validGenders.includes(gender)) {
       return res.status(400).json({ success: false, message: "Invalid gender value." });
     }
+    
 
     // 2️⃣ Check duplicate student
     const existingStudent = await studentModel.findOne({ registration_number });
