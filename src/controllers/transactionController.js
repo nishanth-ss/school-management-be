@@ -123,12 +123,20 @@ const getTransactionsByRange = async (req, res) => {
     const pageSize = parseInt(limit);
 
     // 📊 Fetch POS & Financial transactions (including reversed)
+    // const [posTransactions, financialTransactions] = await Promise.all([
+    //   POSShoppingCart.find({ createdAt: { $gte: startDate } })
+    //     .populate("student_id")
+    //     .populate('products.productId')
+    //     .lean(),
+    //   Financial.find({ createdAt: { $gte: startDate } }).populate('student_id')
+    //     .lean()
+    // ]);
     const [posTransactions, financialTransactions] = await Promise.all([
       POSShoppingCart.find({ createdAt: { $gte: startDate } })
         .populate("student_id")
         .populate('products.productId')
         .lean(),
-      Financial.find({ createdAt: { $gte: startDate } }).populate('student_id')
+      Financial.find({ createdAt: { $gte: startDate },$or:[{depositAmount:{$gt:0}}] }).populate('student_id')
         .lean()
     ]);
 
