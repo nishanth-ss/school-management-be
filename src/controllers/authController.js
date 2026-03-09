@@ -4,7 +4,7 @@ const dotenv = require('dotenv').config();
 const UserSchema = require("../model/userModel");
 const logAudit = require('../utils/auditlogger');
 const tokenBlacklist = require("../utils/blackList");
-const { sendSMS } = require("../service/sms.service");
+const { sendSMS, sendWhatsAppOTP } = require("../service/sms.service");
 const studentModel = require("../model/studentModel");
 const { default: axios } = require("axios");
 
@@ -102,7 +102,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        if (user.role === "student") {
+        if (user.role?.toLocaleLowerCase() === "student" ) {
             if (user.subscription && user.subscriptionEnd <= Date.now()) {
                 // subscription expired → turn it off
                 user.subscription = false;
@@ -145,9 +145,12 @@ exports.login = async (req, res) => {
             user.otpAttempts = 0;
             user.otpAttemptedAt = null;
             user.otpLockedUntil = null;
-console.log("<><>otp",otp)
+// console.log("<><>otp",otp)
+sendWhatsAppOTP(studentData.contact_number,otp,studentData.student_name)
+// console.log("<><>studentData",studentData);
+
             await user.save();
-            // const smsResponse = await sendSMS(otp, studentData.contact_number)
+            //  const smsResponse = await sendSMS(otp, studentData.contact_number)
             
             // if (!smsResponse.status) {
             //     return res.status(400).send({ status: false, message: smsResponse.message })

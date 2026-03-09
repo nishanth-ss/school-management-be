@@ -13,28 +13,24 @@ const mongoose = require('mongoose');
 
 const studentLocationSchema = new mongoose.Schema(
     {
-        locationName: {
+        singletonKey: {
             type: String,
-            required: true,
-            trim: true,
+            default: "SINGLE_LOCATION",
+            unique: true
         },
-        global_location_id:{
-            type:String,
-            required:true
+        locationName: String,
+        schoolName: String,
+        global_location_id: String,
+        schoolCode:String,
+        baseUrl:String,
+        syncStatus: {
+            type: String,
+            enum: ["PENDING", "SYNCED", "FAILED"],
+            default: "PENDING"
         },
-        schoolName:{
-            type:String
-        },
-        createdBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true,
-        },
-        updatedBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true,
-        }
+        syncError: String,
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
         // custodyLimits:[custodyLimitSchema]
     },
     {

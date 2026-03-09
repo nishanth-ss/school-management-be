@@ -41,8 +41,9 @@ const fileUploadRoutes = require('./routes/fileUploadRoutes')
 const paymentRoutes = require("./routes/paymentRoutes")
 const faceRouted = require("./routes/faceRecognationRoute")
 const globalRoutes = require("./routes/globalServerRoutes")
+const whatsapppRoutes = require("./routes/whatsappRoutes")
 const morgan = require("morgan");
-const { sendSMS } = require('./service/sms.service');
+const { sendSMS, sendWhatsAppOTP } = require('./service/sms.service');
 
 // const allowedOrigins = ["http://localhost:5173"]
 
@@ -58,6 +59,7 @@ const { sendSMS } = require('./service/sms.service');
 
 app.use(cors());
 app.use(morgan(":method :url :status :response-time ms"));
+app.use("/webhook",whatsapppRoutes)
 app.use("/user", authRoutes);
 
 app.use("/student-pro", studentRoutes);
@@ -81,6 +83,9 @@ app.use("/upload",authenticateToken,fileUploadRoutes)
 app.use("/payment",paymentRoutes)
 app.use("/face",faceRouted)
 app.use("/api/subscribers",globalRoutes)
+
+// sendWhatsAppOTP("918139886630","813988")
+// sendWhatsAppOTP("+918940891631","813988")
 
 
 app.listen(process.env.PORT, hostname, () => {

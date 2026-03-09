@@ -181,17 +181,16 @@ const createStudent = async (req, res) => {
       blood_group, religion, deposite_amount, class_info, location_id,
       pro_pic, contact_number, descriptor
     } = req.body;
-
     const missingFields = [];
     if (!registration_number) missingFields.push("registration_number");
-    if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
+    // if (!deposite_amount && deposite_amount !== 0) missingFields.push("deposite_amount");
     if (!contact_number) missingFields.push("contact_number");
     if (!student_name) missingFields.push("student_name");
     if (!father_name) missingFields.push("father_name");
     if (!mother_name) missingFields.push("mother_name");
-    if (!date_of_birth) missingFields.push("date_of_birth");
-    if (!gender) missingFields.push("gender");
-    if (!class_info) missingFields.push("class_info");
+    // if (!date_of_birth) missingFields.push("date_of_birth");
+    // if (!gender) missingFields.push("gender");
+    // if (!class_info) missingFields.push("class_info");
     if (!location_id) missingFields.push("location_id");
 
     if (missingFields.length > 0) {
@@ -205,6 +204,7 @@ const createStudent = async (req, res) => {
     if (!validGenders.includes(gender)) {
       return res.status(400).json({ success: false, message: "Invalid gender value." });
     }
+    
 
     // 2️⃣ Check duplicate student
     const existingStudent = await studentModel.findOne({ registration_number });
